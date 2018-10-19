@@ -16,7 +16,7 @@ Shot of the main menu:
 Image of '/tshoot' (combines /route, /ping, and /traceroute)  
 [Imgur](https://i.imgur.com/9nX2OLw.png)  
   
-/route - right now, based on AS Path, bot will mention if route is external to the organization
+/route - right now, based on AS Path, bot will mention if route is external to the organization  
 [Imgur](https://i.imgur.com/rXlrCRi.png)  
   
 /downdevices  
