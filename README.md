@@ -8,3 +8,16 @@ Options include:
   /traceroute - attempt to traceroute to the specified address  
   /downdevices - view a list of current down devices in Solarwinds  
   /tshoot - attempt to do basic troubleshooting on a device  
+
+
+Shot of the main menu:  
+[Imgur](https://i.imgur.com/9nX2OLw.png)  
+  
+Image of '/tshoot' (combines /route, /ping, and /traceroute)  
+[Imgur](https://i.imgur.com/9nX2OLw.png)  
+  
+/route  
+[Imgur](https://i.imgur.com/rXlrCRi.png)  
+  
+/downdevices  
+[Imgur](https://i.imgur.com/ew5BAll.png)
