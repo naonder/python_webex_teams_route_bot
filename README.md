@@ -1,5 +1,5 @@
 # python_webex_teams_route_bot
-Bot that can do various tasks.
+Bot that can do various tasks. Invoke using the '@botname /dosomething'
 
 Options include:  
   /help - lists commands possible  
