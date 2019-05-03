@@ -12,10 +12,10 @@ requests.packages.urllib3.disable_warnings()
 app = Flask(__name__)
 
 # Set some basic variables to use for the app itself
-bot_email = 'yourbot@webex.bot'  # Email for your bot
-access_token = 'Your access token here'
+bot_email = 'yourbot@webex.bot' # Your bot's email
+access_token = 'youraccesstoken' # Your access token
 base_url = 'https://api.ciscospark.com/v1/'
-server = 'x.x.x.x'  # Server that's running the bot
+server = 'x.x.x.x' # Server that is running the bot
 port = 10010
 headers = {"Authorization": "Bearer {}".format(access_token), "Content-Type": "application/json"}
 
@@ -35,7 +35,7 @@ def index():
     if email == bot_email:
         return ''
 
-    if 'example.com' in email:  # Check to make sure only registered users can invoke the bot
+    if 'example.com' in email: # Check to make sure only registered users can invoke the bot
 
         # If message is none, send 'help' info, otherwise, complete task as requested
 
@@ -57,6 +57,12 @@ def index():
         elif '/tshoot' in message:
             send_to_teams('Troubleshooting might take a while, stand by...\r\n', room_id)
             return_info = troubleshoot(message)
+
+        elif '/controlconns' in message:
+            return_info = controlconns(message)
+
+        elif '/bfdsessions' in message:
+            return_info = bfdsess(message)
 
         else:
             return_info = get_help()
@@ -89,7 +95,7 @@ def get_route_info(address):
             try:
                 base = result["Cisco-IOS-XE-bgp-oper:bgp-route-entry"]["bgp-path-entries"]["bgp-path-entry"][0]
                 prefix = result["Cisco-IOS-XE-bgp-oper:bgp-route-entry"]['prefix']
-                if 'xxxx' in base['as-path'] or 'xxxx' in base['as-path']:  # Just checking if route is external
+                if 'xxxx' in base['as-path'] or 'xxxx' in base['as-path']: # Checking of AS's to see if external
                     result = ('\r\nBGP information for {}:'
                               '\r\n'
                               '\r\nNext hop: {}'
@@ -97,7 +103,7 @@ def get_route_info(address):
                               '\r\nLocal pref: {}'
                               '\r\nAS path: {}'
                               '\r\nOrigin: {}'
-                              '\r\nNOTE: Prefix/Route is external to xxxx'  # External checking is optional
+                              '\r\nNOTE: Prefix/Route is external to VSTO'
                               .format(prefix, base["nexthop"], base["metric"], base["local-pref"],
                                       base["as-path"], base["origin"]))
                 else:
@@ -164,6 +170,48 @@ def sw_query():
         return 'No down devices'
 
 
+# Make an API call to vManage to check on control connections
+def controlconns(address):
+    control = route_get.DeviceCheck()
+    if address.split(' ')[-1] != ' ':
+        real_address = address.split(' ')[-1]
+        control_status, control_response = control.control_connections(real_address)
+    if control_status == 400:
+        return control_response['error']['details']
+    elif control_status == 200:
+        statement = ['\r\nCurrent control connections for {}: \r\n'.format(real_address)]
+        for item in control_response['data']:
+            statement.append('Peer type: ' + item['peer-type'])
+            statement.append('Peer system IP: ' + item['system-ip'])
+            statement.append('Peer connection type: ' + item['local-color'])
+            statement.append('Uptime: ' + item['uptime'])
+            statement.append('\r\n' + '*' * 79 + '\r\n')
+        return '\r\n'.join(statement)
+
+
+# Make an API call to vManage to check on BFD sessions
+def bfdsess(address):
+    bfd = route_get.DeviceCheck()
+    if address.split(' ')[-1] != ' ':
+        real_address = address.split(' ')[-1]
+        bfd_status, bfd_response = bfd.bfd_sessions(real_address)
+    if bfd_status == 400:
+        return bfd_response['error']['details']
+    elif bfd_status == 200:
+        statement = ['\r\nCurrent BFD sessions for {}: \r\n'.format(real_address)]
+        for item in bfd_response['data']:
+            statement.append('Local address: ' + item['src-ip'])
+            statement.append('Remote address: ' + item['dst-ip'])
+            statement.append('Remote system IP: ' + item['system-ip'])
+            statement.append('Local TLOC color: ' + item['local-color'])
+            statement.append('Remote TLOC color: ' + item['color'])
+            statement.append('BFD session state: ' + item['state'])
+            statement.append('BFD session uptime: ' + item['uptime'])
+            statement.append('\r\n' + '*' * 79 + '\r\n')
+        return '\r\n'.join(statement)
+
+
+# Main help menu
 def get_help():
     message = ('Current options are:'
                '\r\n/help - lists commands possible'
@@ -171,6 +219,8 @@ def get_help():
                '\r\n/ping - attempt to ping the specified address (may take a while to complete)'
                '\r\n/traceroute - attempt to traceroute to the specified address (may take a while to complete)'
                '\r\n/downdevices - view a list of current down devices in Solarwinds'
+               '\r\n/controlconns - view SD-WAN control connections for a device'
+               '\r\n/bfdsessions - view SD-WAN BFD sessions for a device'
                '\r\n/tshoot - attempt to do basic troubleshooting on a device (may take a long while to complete)')
     return message
 

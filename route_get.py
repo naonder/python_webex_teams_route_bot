@@ -9,14 +9,17 @@ from orionsdk import SwisClient
 
 class DeviceCheck:
     def __init__(self):
-        # URL and address will be up to you - device running RESTConf as well as device to run ping/traceroute from
         with open('/path/to/creds.json') as credentials:
+            # URL and address will be up to you - device running RESTConf as well as device to run ping/traceroute from
             self.creds = json.load(credentials)
         self.name = self.creds['username']
         self.passwrd = self.creds['password']
+        self.vmanage_user = self.creds['vmanageuser']
+        self.vmanage_pass = self.creds['vmanagepass']
         self.base_url = 'https://x.x.x.x/restconf/data/Cisco-IOS-XE-bgp-oper:bgp-state-data/bgp-route-vrfs/' \
                         'bgp-route-vrf=default/bgp-route-afs/bgp-route-af=ipv4-unicast/bgp-route-filters/' \
                         'bgp-route-filter=bgp-rf-all/bgp-route-entries/bgp-route-entry'
+        self.vmanage_base_url = 'https://x.x.x.x/dataservice/'
         self.device_address = 'x.x.x.x'
         self.ios = 'cisco_ios'
 
@@ -55,6 +58,27 @@ class DeviceCheck:
         print(traceroute)
         connection.disconnect()
         return ping, traceroute
+
+    def control_connections(self, host):
+        address = socket.gethostbyname(host)
+        requests.packages.urllib3.disable_warnings()
+        url = self.vmanage_base_url+'device/control/connections?deviceId={}'.format(address)
+        control_connections_response = requests.get(url, auth=(self.vmanage_user, self.vmanage_pass), verify=False)
+        if control_connections_response.status_code != 404:
+            return control_connections_response.status_code, control_connections_response.json()
+        else:
+            return '404'
+
+    def bfd_sessions(self, host):
+        address = socket.gethostbyname(host)
+        requests.packages.urllib3.disable_warnings()
+        url = self.vmanage_base_url+'device/bfd/sessions?deviceId={}'.format(address)
+        bfd_sessions_response = requests.get(url, auth=(self.vmanage_user, self.vmanage_pass), verify=False)
+        if bfd_sessions_response.status_code != '404':
+            return bfd_sessions_response.status_code, bfd_sessions_response.json()
+        else:
+            return '404'
+
 
 
 class SwQuery:
